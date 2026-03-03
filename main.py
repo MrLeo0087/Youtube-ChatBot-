@@ -28,6 +28,9 @@ if 'url' not in st.session_state:
 if 'summary' not in st.session_state:
     st.session_state.summary = ""
 
+if 'note' not in st.session_state:
+    st.session_state.note = ""
+
 
 # ----- SIDEBAR -------
 with st.sidebar:
@@ -76,8 +79,13 @@ if st.session_state.page == 'home':
     if model_type == "DEFAULT":
         st.session_state.llm_type = "DEFAULT"
 
-        st.text_input("API KEY (GEMINI)", type="password", key="gemini_api")
-        st.text_input("API KEY (GROQ)", type="password", key="groq_api")
+        gemini_input = st.text_input("API KEY (GEMINI)", type="password", value=st.session_state.gemini_api)
+        if gemini_input:
+            st.session_state.gemini_api = gemini_input
+
+        groq_input = st.text_input("API KEY (GROQ)", type="password", value=st.session_state.groq_api)
+        if groq_input:
+            st.session_state.groq_api = groq_input
 
         if st.session_state.gemini_api and st.session_state.groq_api:
             st.success("""\n
@@ -109,7 +117,7 @@ if st.session_state.page == 'home':
                     Chat Model -> Phi-4-Mini \n
                     Note Model -> Phi-4-Mini""")
     if st.session_state.transcript:
-        st.text_area('Transcript',value=st.session_state.transcript)
+        st.text_area('Transcript',height=800,value=st.session_state.transcript)
         
     
 
@@ -125,6 +133,8 @@ if st.session_state.page == 'summary':
         st.warning("⚠️ Groq API Key is missing. Please enter it on the Home page.")
 
     else:
+        with st.sidebar:
+            st.text_area('Transcript',height=800,value=st.session_state.transcript)
         if not st.session_state.summary:
             with st.spinner("Llama is reading the transcript... please wait..."):
                 try:
@@ -142,7 +152,8 @@ if st.session_state.page == 'summary':
             st.text_area(
                 'Edit the markdown below:', 
                 height=400, 
-                key='summary'
+                value=st.session_state.summary,
+                key="summary_editor"
             )
 
         st.divider()
@@ -168,4 +179,39 @@ if st.session_state.page == 'chat':
 
 
 if st.session_state.page == 'note':
-    st.markdown('Note')
+    st.title("🗒️Note")
+    st.divider()
+
+    if not st.session_state.transcript:
+        st.warning("⚠️ No transcript found. Please go to the sidebar and click 'GET TRANSCRIPT' first.")
+    elif not st.session_state.gemini_api:
+        st.warning("⚠️ No API or wrong API. Please check gemini api key again")
+    
+    else:
+        with st.sidebar:
+            st.text_area('Transcript',height=800,value=st.session_state.transcript)
+        if not st.session_state.note:
+            with st.spinner("Generating Note from Video ..... "):
+                try:
+                    from model_choice.default import note
+                    response = note(st.session_state.gemini_api,st.session_state.transcript)
+                    st.session_state.note = response
+                    st.success("✅ Note Complete")
+
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+        st.markdown(st.session_state.note)
+        with st.expander("Edit Note"):
+            st.text_area(
+                "Edit the note",
+                height=800,
+                value=st.session_state.note,
+                key='note_editor_widget'
+                )
+        st.divider()
+        if st.button('Regenerate Note'):
+            st.session_state.note = ""
+            st.rerun()
+                    
+

@@ -2,32 +2,48 @@ from langchain_core.prompts import ChatPromptTemplate
 
 # ------------- Default ----------------\
 default_note_prompt = ChatPromptTemplate.from_messages([
-    ("system", """You are a Master Academic Note-Taker. Your goal is to create high-utility, structured study notes from a video transcript. 
-    
-DO NOT summarize. Instead, DOCUMENT the video as if creating a permanent knowledge base for a student who cannot watch the video.
+    ("system", """You are a top-performing university student. Your goal is to create a professional, highly readable study guide from a lecture transcript.
 
-STRUCTURE YOUR RESPONSE AS FOLLOWS:
+--- FORMATTING RULES ---
+1. DO NOT use timestamps (e.g., [00:00]).
+2. DO NOT mention "the speaker" or "the video." Present the information as objective facts.
+3. Use a clear HIERARCHY:
+   - # [Main Title]
+   - ## [Major Concept]
+   - ### [Sub-topic]
+   - Bullet points for details.
+    - some question for user from video
+     
+4. BOLD key terms on their first mention.
+5. Use tables ONLY if comparing two or more items. Otherwise, use bulleted lists.
 
-1. **Top-Level Taxonomy**: A brief list of the 3-5 'Main Pillars' covered in this video.
-2. **The Glossary Table**: A Markdown table of every technical term, jargon, or proper noun mentioned. 
-   | Term | Definition (Based on Script) | Usage Example from Video |
-3. **Chronological Deep Dive (The Core)**: 
-   - Use `##` for major sections.
-   - Use `###` for specific sub-points.
-   - Capture **Detailed Logic**: Explain the 'Why' behind every 'What'. 
-   - If the speaker gives an analogy (e.g., "It's like a library..."), record it verbatim.
-   - Include specific data points, percentages, or names of tools mentioned.
-4. **The 'How-To' Workflow**: If the video is a tutorial, create an indented step-by-step checklist.
-5. **Critical 'Aha!' Moments**: List specific insights that are unique to this speaker's perspective.
-6. **The "Check for Understanding"**: Generate 3-5 high-quality questions that a student should be able to answer after reading these notes.
+--- CONTENT STRUCTURE ---
 
-STRICT RULES:
-- Use Markdown bolding for emphasis on key phrases.
-- If the transcript has timestamps, start every major header with the [MM:SS] marker.
-- Use only the provided transcript. If the transcript ends abruptly, state: [END OF PROVIDED SCRIPT]."""),
-    ("human", "Here is the transcript for processing: \n\n {transcript}")
+# [Subject Name/Video Title]
+
+## Overview
+A brief, 2-3 sentence introduction to the core theme of the lesson.
+
+## Core Concepts & Definitions
+Group the main ideas logically. Explain the "Why" and "How" behind each concept. 
+- Include math, formula, code if needed 
+- Use indented bullets for examples.
+- Include any analogies used to make complex ideas simple. but do not include outside fact
+
+## Step-by-Step Workflows
+If a process is explained, provide a numbered list that is easy to follow.
+
+## Summary of Key Insights
+A section highlighting the most important "takeaway" messages or unique perspectives.
+
+## Self-Assessment Questions
+List 5 questions that test deep understanding of the material.
+
+---
+End the document with a clean horizontal rule.
+"""),
+    ("human", "Here is the transcript. Convert it into a clean student study guide: \n\n {transcript}")
 ])
-
 
 default_summary_prompt = ChatPromptTemplate.from_messages([
     ("system", """You are a High-Signal Intelligence Analyst. Your task is to distill a long video transcript into a 3-part 'Executive Briefing'. 
