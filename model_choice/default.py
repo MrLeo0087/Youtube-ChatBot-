@@ -23,22 +23,6 @@ def summary(api,transcript):
     response = chain.invoke({'transcript':transcript})
     return response
 
-def chat(api,query,context):
-    llm = ChatGoogleGenerativeAI(
-        google_api_key=api,
-        model=chat_model, 
-        temperature=0.2,           
-        max_output_tokens=1000,  
-        top_p=0.95,                
-        top_k=40,                  
-        max_retries=2      
-    )        
-    
-    chain = default_rag_prompt | llm | StrOutputParser()
-    response = chain.invoke({'context':context,'question':query})
-    return response
-
-
 
 def note(api,transcript):
     llm = ChatGoogleGenerativeAI(

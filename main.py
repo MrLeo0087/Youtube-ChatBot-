@@ -31,6 +31,9 @@ if 'summary' not in st.session_state:
 if 'note' not in st.session_state:
     st.session_state.note = ""
 
+if 'history' not in st.session_state:
+    st.session_state.history = []
+
 
 # ----- SIDEBAR -------
 with st.sidebar:
@@ -74,7 +77,7 @@ if st.session_state.page == 'home':
     st.divider()
 
 
-    model_type = st.selectbox('Select LLM',['DEFAULT','GEMINI','GROQ','OLLAMA (LOCAL)'])
+    model_type = st.selectbox('Select LLM',['DEFAULT'])
 
     if model_type == "DEFAULT":
         st.session_state.llm_type = "DEFAULT"
@@ -93,29 +96,29 @@ if st.session_state.page == 'home':
                         Chat Model -> gemini-2.5-flash-lite \n
                         Note Model -> gemini-2.5-flash""")
 
-    if model_type == "GEMINI":
-        st.session_state.llm_type = "GEMINI"
-        st.text_input("API KEY (GEMINI)", type="password", key="gemini_api")
-        if st.session_state.gemini_api:
-            st.success("""\n
-                    Summarize Model -> gemini-2.5-flash \n 
-                    Chat Model -> gemini-2.5-flash-lite \n
-                    Note Model -> gemini-2.5-flash""")
+    # if model_type == "GEMINI":
+    #     st.session_state.llm_type = "GEMINI"
+    #     st.text_input("API KEY (GEMINI)", type="password", key="gemini_api")
+    #     if st.session_state.gemini_api:
+    #         st.success("""\n
+    #                 Summarize Model -> gemini-2.5-flash \n 
+    #                 Chat Model -> gemini-2.5-flash-lite \n
+    #                 Note Model -> gemini-2.5-flash""")
         
-    elif model_type == "GROQ":
-        st.session_state.llm_type = "GROQ"
-        st.text_input("API KEY (GROQ)", type="password", key="groq_api")
-        if st.session_state.groq_api:
-            st.success("""\n
-                    Summarize Model -> llama-3.1-8b-instant \n 
-                    Chat Model -> meta-llama/llama-4-maverick-17b-128e-instruct \n
-                    Note Model -> meta-llama/llama-4-scout-17b-16e-instruct""")
+    # elif model_type == "GROQ":
+    #     st.session_state.llm_type = "GROQ"
+    #     st.text_input("API KEY (GROQ)", type="password", key="groq_api")
+    #     if st.session_state.groq_api:
+    #         st.success("""\n
+    #                 Summarize Model -> llama-3.1-8b-instant \n 
+    #                 Chat Model -> meta-llama/llama-4-maverick-17b-128e-instruct \n
+    #                 Note Model -> meta-llama/llama-4-scout-17b-16e-instruct""")
             
-    elif model_type == 'OLLAMA (LOCAL)':
-        st.success("""\n
-                    Summarize Model -> qwen2.5:3b \n 
-                    Chat Model -> Phi-4-Mini \n
-                    Note Model -> Phi-4-Mini""")
+    # elif model_type == 'OLLAMA (LOCAL)':
+    #     st.success("""\n
+    #                 Summarize Model -> qwen2.5:3b \n 
+    #                 Chat Model -> Phi-4-Mini \n
+    #                 Note Model -> Phi-4-Mini""")
     if st.session_state.transcript:
         st.text_area('Transcript',height=800,value=st.session_state.transcript)
         
@@ -165,17 +168,45 @@ if st.session_state.page == 'summary':
 
 
 if st.session_state.page == 'chat':
-    pass
-    # if st.session_state.llm_type == "DEFAULT":
-    #     if st.session_state.transcript and st.session_state.gemini_api:
-    #         from model_choice.default import chat
-    #         result = chat(st.session_state.gemini_api,st.session_state.transcript)
-    #         st.session_state.summary = result
+    st.title("L.I.G.H.T Chatbot")
+    st.divider()
 
-    #         st.text_area('Summary',value=st.session_state.summary)
+    if not st.session_state.get('gemini_api'):
+        st.error("GEMINI API Empty or wrong. check again from home page")
+    elif not st.session_state.get('transcript'):
+        st.error("Transcript not available. Generate transcript first")
+    else:
+        from chatbot.light import chat
+        from RAG.rag import query as rag_query, BM25Retriever, chunking 
+        @st.cache_resource
+        def prepare_retriever(text):
+            chunks = chunking(text)
+            retriever = BM25Retriever(chunks)
+            return chunks, retriever
 
-    #     else:
-    #         st.warning("SOME ERROR ... CHECK API AND TRANSCRIPT")
+        chunks, bm25 = prepare_retriever(st.session_state.transcript)
+
+        for msg in st.session_state.history:
+            with st.chat_message(msg['role']):
+                st.write(msg['message'])
+
+
+        user_input = st.chat_input("Ask me anything")
+        
+        if user_input:
+
+            with st.chat_message('user'):
+                st.write(user_input)
+            st.session_state.history.append({'role': 'user', 'message': user_input})
+
+            context = rag_query(st.session_state.transcript, chunks,user_input,bm25)
+            
+            result = chat(st.session_state.gemini_api, user_input, context)
+
+            with st.chat_message('assistant'):
+                st.write(result)
+            st.session_state.history.append({'role': 'assistant', 'message': result})
+
 
 
 if st.session_state.page == 'note':
