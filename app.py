@@ -93,7 +93,7 @@ if st.session_state.page == 'home':
         if st.session_state.gemini_api and st.session_state.groq_api:
             st.success("""\n
                         Summarize Model -> meta-llama/llama-4-scout-17b-16e-instruct \n 
-                        Chat Model -> gemini-2.5-flash-lite \n
+                        Chat Model -> gemini-3.1-flash-lite-preview \n
                         Note Model -> gemini-2.5-flash""")
 
     # if model_type == "GEMINI":
@@ -188,7 +188,7 @@ if st.session_state.page == 'chat':
 
         for msg in st.session_state.history:
             with st.chat_message(msg['role']):
-                st.write(msg['message'])
+                st.markdown(msg['message'])
 
 
         user_input = st.chat_input("Ask me anything")
@@ -196,7 +196,7 @@ if st.session_state.page == 'chat':
         if user_input:
 
             with st.chat_message('user'):
-                st.write(user_input)
+                st.markdown(user_input)
             st.session_state.history.append({'role': 'user', 'message': user_input})
 
             context = rag_query(st.session_state.transcript, chunks,user_input,bm25)
@@ -204,7 +204,7 @@ if st.session_state.page == 'chat':
             result = chat(st.session_state.gemini_api, user_input, context)
 
             with st.chat_message('assistant'):
-                st.write(result)
+                st.markdown(result)
             st.session_state.history.append({'role': 'assistant', 'message': result})
 
 
